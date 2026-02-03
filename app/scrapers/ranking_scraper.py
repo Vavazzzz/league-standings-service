@@ -1,9 +1,10 @@
 from bs4 import BeautifulSoup
-from models.standings import StandingRow
+from app.models.standings import StandingRow
+from app.scrapers.tuttocampo_client import TuttoCampoClient
 
 
 def parse_ranking(html: str) -> list[StandingRow]:
-
+    """Parsa l'HTML della classifica e restituisce una lista di StandingRow"""
     soup = BeautifulSoup(html, "lxml")
 
     rows = soup.select("table.table_ranking tbody tr")
@@ -12,7 +13,6 @@ def parse_ranking(html: str) -> list[StandingRow]:
     position = 1
 
     for row in rows:
-
         team_cell = row.select_one("td.team a")
         if not team_cell:
             continue
@@ -44,3 +44,17 @@ def parse_ranking(html: str) -> list[StandingRow]:
         position += 1
 
     return standings
+
+
+def fetch_standings(match_day: int | None = None) -> list[StandingRow]:
+    """Fetcha e parsa la classifica da TuttoCampo
+    
+    Args:
+        match_day: Numero della giornata (None per classifica totale)
+    
+    Returns:
+        Lista di StandingRow
+    """
+    client = TuttoCampoClient()
+    html = client.fetch_standings(match_day)
+    return parse_ranking(html)
