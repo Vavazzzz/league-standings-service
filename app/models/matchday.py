@@ -1,10 +1,9 @@
 from pydantic import BaseModel
 from typing import Optional
+from app.models.matchresult import MatchResult as Match
 
 
-class MatchResult(BaseModel):
-    home_team: str
-    away_team: str
-    home_score: Optional[int]
-    away_score: Optional[int]
-    played: bool
+class MatchDay(BaseModel):
+    """Modello per una giornata di partite"""
+    match_day: int
+    matches: list[Match]
