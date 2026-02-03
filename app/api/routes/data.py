@@ -3,7 +3,7 @@ from app.models.standings import StandingRow
 from app.models.matchresult import MatchResult
 from app.models.matchday import MatchDay
 from app.scrapers.ranking_scraper import fetch_standings
-from app.scrapers.result_scraper import fetch_results
+from app.scrapers.result_scraper import fetch_results, fetch_match_by_team
 from app.scrapers.matchday_scraper import fetch_next_matches
 
 router = APIRouter(prefix="/data", tags=["data"])
@@ -33,6 +33,20 @@ def get_results(match_day: int = Query(...)):
         Lista di MatchResult
     """
     return fetch_results(match_day)
+
+
+@router.get("/results/team", response_model=MatchResult | None)
+def get_team_match(match_day: int = Query(...), team_name: str = Query(...)):
+    """Ottiene il risultato della partita di una squadra specifica
+    
+    Args:
+        match_day: Numero della giornata
+        team_name: Nome della squadra
+    
+    Returns:
+        MatchResult con i dati della partita della squadra
+    """
+    return fetch_match_by_team(match_day, team_name)
 
 
 @router.get("/matchday", response_model=MatchDay)
