@@ -1,0 +1,25 @@
+# Virtual env
+.venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# Output immagini temporanee
+/tmp/
