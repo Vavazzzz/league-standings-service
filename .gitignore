@@ -23,3 +23,5 @@ build/
 
 # Output immagini temporanee
 /tmp/
+test_output/
+data/
