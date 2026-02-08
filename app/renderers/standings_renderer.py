@@ -10,11 +10,22 @@ from app.renderers.svg_utils import (
 )
 
 
+# Team name exceptions for display
+TEAM_NAME_MAPPINGS = {
+    "selecao libertas calcetto": "selecao libertas c5"
+}
+
+
 class StandingsRenderer:
 
     def __init__(self, template_path: Path, logos_dir: Path):
         self.template_path = template_path
         self.logos_dir = logos_dir
+
+    def _get_display_name(self, team_name: str) -> str:
+        """Get the display name for a team, applying any exceptions."""
+        lower_name = team_name.lower()
+        return TEAM_NAME_MAPPINGS.get(lower_name, team_name)
 
     def render_png(self, standings: list, output_path: Path):
 
@@ -25,7 +36,8 @@ class StandingsRenderer:
 
         for team in standings:
             # ===== TESTO =====
-            set_text(tree, f"row_{team['position']}_team", team['team_name'])
+            display_name = self._get_display_name(team['team_name'])
+            set_text(tree, f"row_{team['position']}_team", display_name)
             set_text(tree, f"row_{team['position']}_giocate", team['played'])
             set_text(tree, f"row_{team['position']}_punti", team['points'])
 
