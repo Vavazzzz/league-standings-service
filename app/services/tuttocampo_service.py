@@ -1,5 +1,5 @@
 from scrapers.tuttocampo_client import TuttoCampoClient
-from scrapers.ranking_scraper import parse_ranking
+from app.scrapers.standings_scraper import parse_ranking
 from scrapers.result_scraper import parse_results
 
 

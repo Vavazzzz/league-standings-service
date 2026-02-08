@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query
 from app.models.standings import StandingRow
 from app.models.matchresult import MatchResult
 from app.models.matchday import MatchDay
-from app.scrapers.ranking_scraper import fetch_standings
+from app.scrapers.standings_scraper import fetch_standings
 from app.scrapers.result_scraper import fetch_results, fetch_match_by_team
 from app.scrapers.matchday_scraper import fetch_next_matches, fetch_next_match_by_team
 
