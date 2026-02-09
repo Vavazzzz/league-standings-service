@@ -1,11 +1,15 @@
 import requests
 
+CATEGORY_ID_1 = "LO.K.B.S2"
+CATEGORY_ID_2 = "LO.KD.A.SD"
+URL_1 = "/Lombardia/CalcioA5SerieC2/GironeBSerieC2/"
+URL_2 = "/Lombardia/CalcioA5Dilettanti/GironeASerieD/"
 
 class TuttoCampoClient:
     """Client per TuttoCampo che mantiene la sessione e i cookies"""
     
     BASE_URL = "https://www.tuttocampo.it"
-    CATEGORY_ID = "LO.KD.A.SD"
+    CATEGORY_ID = CATEGORY_ID_1
     
     def __init__(self):
         self.session = requests.Session()
@@ -23,7 +27,7 @@ class TuttoCampoClient:
         if self._initialized:
             return
             
-        main_url = f"{self.BASE_URL}/Lombardia/CalcioA5Dilettanti/GironeASerieD"
+        main_url = f"{self.BASE_URL}{URL_1}"
         
         try:
             response = self.session.get(main_url, headers=self.headers, timeout=10)
