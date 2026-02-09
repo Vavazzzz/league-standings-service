@@ -4,7 +4,6 @@ from pathlib import Path
 from PIL import Image
 from lxml import etree
 
-
 XLINK = "http://www.w3.org/1999/xlink"
 PLACEHOLDER_HEIGHT = 81.343002
 PLACEHOLDER_WIDTH = 67.721581
