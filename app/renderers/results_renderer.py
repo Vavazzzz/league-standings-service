@@ -1,14 +1,10 @@
 from pathlib import Path
 import tempfile
 import cairosvg
+from lxml import etree as ET
 
-from app.renderers.svg_utils import (
-    load_svg,
-    set_text,
-    set_logo
-)
-
-from app.renderers.text_utils import extract_surnames, set_multiline_text
+from app.renderers.svg_utils import load_svg, set_logo
+from app.renderers.text_utils import set_text, extract_surnames, set_multiline_text
 
 
 class ResultRenderer:
@@ -19,48 +15,43 @@ class ResultRenderer:
 
     def render_png(self, match_data_1: dict, match_data_2: dict, output_path: Path):
 
-        tree = load_svg(str(self.template_path))
+        root = load_svg(str(self.template_path))
 
         # ===== risultato =====
 
-        set_text(tree, "home_score_1", match_data_1["home_score"])
-        set_text(tree, "away_score_1", match_data_1["away_score"])
-        set_text(tree, "home_score_2", match_data_2["home_score"])
-        set_text(tree, "away_score_2", match_data_2["away_score"])
+        set_text(root, "home_score_1", match_data_1["home_score"])
+        set_text(root, "away_score_1", match_data_1["away_score"])
+        set_text(root, "home_score_2", match_data_2["home_score"])
+        set_text(root, "away_score_2", match_data_2["away_score"])
 
         # ===== loghi =====
 
-        home_logo_1 = self.logos_dir / f"{match_data_1['home_team_id']}.png"
-        away_logo_1 = self.logos_dir / f"{match_data_1['away_team_id']}.png"
-        home_logo_2 = self.logos_dir / f"{match_data_2['home_team_id']}.png"
-        away_logo_2 = self.logos_dir / f"{match_data_2['away_team_id']}.png"
+        set_logo(root, "home_logo_1", self.logos_dir / f"{match_data_1['home_team_id']}.png")
+        set_logo(root, "away_logo_1", self.logos_dir / f"{match_data_1['away_team_id']}.png")
+        set_logo(root, "home_logo_2", self.logos_dir / f"{match_data_2['home_team_id']}.png")
+        set_logo(root, "away_logo_2", self.logos_dir / f"{match_data_2['away_team_id']}.png")
 
-        set_logo(tree, "home_logo_1", str(home_logo_1))
-        set_logo(tree, "away_logo_1", str(away_logo_1))
-        set_logo(tree, "home_logo_2", str(home_logo_2))
-        set_logo(tree, "away_logo_2", str(away_logo_2))
+        # ===== marcatori =====
 
-        # ===== marcatori multiline =====
-        if match_data_1["home_team"] == "Zelo CO5":
-            scorers_1_data = match_data_1["home_scorers"]
-        else:
-            scorers_1_data = match_data_1["away_scorers"]
+        scorers_1_data = (
+            match_data_1["home_scorers"]
+            if match_data_1["home_team"] == "Zelo CO5"
+            else match_data_1["away_scorers"]
+        )
 
-        if match_data_2["home_team"] == "Zelo C5 U23":
-            scorers_2_data = match_data_2["home_scorers"]
-        else:
-            scorers_2_data = match_data_2["away_scorers"]
+        scorers_2_data = (
+            match_data_2["home_scorers"]
+            if match_data_2["home_team"] == "Zelo C5 U23"
+            else match_data_2["away_scorers"]
+        )
 
-        scorers_1 = extract_surnames(scorers_1_data)
-        scorers_2 = extract_surnames(scorers_2_data)
-        
-        set_multiline_text(tree, "scorers_1", scorers_1)
-        set_multiline_text(tree, "scorers_2", scorers_2)
-  
+        set_multiline_text(root, "scorers_1", extract_surnames(scorers_1_data))
+        set_multiline_text(root, "scorers_2", extract_surnames(scorers_2_data))
+
         # ===== salva svg temporaneo =====
 
         with tempfile.NamedTemporaryFile(suffix=".svg", delete=False) as tmp:
-            tree.write(tmp.name)
+            ET.ElementTree(root).write(tmp.name)
             temp_svg = tmp.name
 
         output_path.parent.mkdir(parents=True, exist_ok=True)

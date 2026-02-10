@@ -1,45 +1,61 @@
 import re
 from lxml import etree as ET
+from app.renderers.svg_utils import find_by_id, SVG_NS_URI
 
-def set_text(tree, element_id, new_text):
-    element = tree.find(f".//*[@id='{element_id}']")
 
-    if element is None:
-        raise ValueError(f"Elemento {element_id} non trovato")
-
-    # Rimuove eventuali tspan figli
+def _remove_children(element):
     for child in list(element):
         element.remove(child)
 
+
+def set_text(root, element_id, new_text):
+
+    element = find_by_id(root, element_id)
+
+    # NON usare clear()
+    _remove_children(element)
+
     element.text = str(new_text)
 
-    
+    # garantiamo centratura
+    element.set("text-anchor", "middle")
+    element.set("dominant-baseline", "middle")
+
+
 def extract_surnames(scorers: list) -> list[str]:
 
     surnames = []
 
     for scorer in scorers:
 
-        clean = re.sub(r"\(.*?\)", "", scorer["name"]).strip()
-        surname = clean.split()[-1]
+        name = scorer["name"]
+
+        name = re.sub(r"\(.*?\)", "", name)
+
+        match = re.search(r"\d+(?:\+\d+)?\.\s*(.+)", name)
+
+        if match:
+            surname = match.group(1)
+            surname = re.split(r"[,;]", surname)[0]
+            surname = surname.strip()
+        else:
+            surname = name.strip()
 
         surnames.append(surname)
 
     return surnames
 
 
-def set_multiline_text(tree, element_id, lines, base_font_size=48):
+def set_multiline_text(root, element_id, lines, base_font_size=48):
 
-    el = tree.find(f".//*[@id='{element_id}']")
-    if el is None:
-        raise ValueError(f"Elemento {element_id} non trovato")
+    el = find_by_id(root, element_id)
 
-    # pulizia contenuto
-    el.text = ""
-    for child in list(el):
-        el.remove(child)
+    x = el.get("x")
+    y = el.get("y")
+    text_anchor = el.get("text-anchor", "middle")
 
-    # scaling font
+    _remove_children(el)
+
     line_count = max(len(lines), 1)
 
     if line_count > 6:
@@ -48,19 +64,17 @@ def set_multiline_text(tree, element_id, lines, base_font_size=48):
         font_size = base_font_size
 
     el.set("font-size", str(font_size))
-
-    # namespace SVG (IMPORTANTISSIMO con lxml)
-    nsmap = el.nsmap
-    svg_ns = nsmap.get(None)
+    el.set("text-anchor", text_anchor)
 
     for i, line in enumerate(lines):
 
-        tspan = ET.Element(f"{{{svg_ns}}}tspan")
-
+        tspan = ET.Element(f"{{{SVG_NS_URI}}}tspan")
         tspan.text = line
+        tspan.set("x", x)
 
-        if i > 0:
-            tspan.set("x", el.get("x"))
+        if i == 0:
+            tspan.set("dy", "0")
+        else:
             tspan.set("dy", "1.2em")
 
         el.append(tspan)
