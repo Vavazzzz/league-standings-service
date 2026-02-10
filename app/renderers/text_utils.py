@@ -1,8 +1,19 @@
 import re
 from lxml import etree as ET
 
+def set_text(tree, element_id, new_text):
+    element = tree.find(f".//*[@id='{element_id}']")
 
+    if element is None:
+        raise ValueError(f"Elemento {element_id} non trovato")
 
+    # Rimuove eventuali tspan figli
+    for child in list(element):
+        element.remove(child)
+
+    element.text = str(new_text)
+
+    
 def extract_surnames(scorers: list) -> list[str]:
 
     surnames = []
