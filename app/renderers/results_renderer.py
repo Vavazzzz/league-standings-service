@@ -41,9 +41,18 @@ class ResultRenderer:
         set_logo(tree, "away_logo_2", str(away_logo_2))
 
         # ===== marcatori multiline =====
+        if match_data_1["home_team"] == "Zelo CO5":
+            scorers_1_data = match_data_1["home_scorers"]
+        else:
+            scorers_1_data = match_data_1["away_scorers"]
 
-        scorers_1 = extract_surnames(match_data_1["home_scorers"])
-        scorers_2 = extract_surnames(match_data_2["home_scorers"])
+        if match_data_2["home_team"] == "Zelo C5 U23":
+            scorers_2_data = match_data_2["home_scorers"]
+        else:
+            scorers_2_data = match_data_2["away_scorers"]
+
+        scorers_1 = extract_surnames(scorers_1_data)
+        scorers_2 = extract_surnames(scorers_2_data)
         
         set_multiline_text(tree, "scorers_1", scorers_1)
         set_multiline_text(tree, "scorers_2", scorers_2)
