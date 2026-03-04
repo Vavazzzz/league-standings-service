@@ -126,31 +126,33 @@ def parse_results(html: str, match_day: int | None = None) -> list[MatchResult]:
     return results
 
 
-def fetch_results(match_day: int) -> list[MatchResult]:
+def fetch_results(match_day: int, team_id: str = "1") -> list[MatchResult]:
     """Fetcha e parsa i risultati da TuttoCampo per una giornata specifica
     
     Args:
         match_day: Numero della giornata
+        team_id: ID del team (default: "1")
     
     Returns:
         Lista di MatchResult
     """
-    client = TuttoCampoClient()
+    client = TuttoCampoClient(team_id=team_id)
     html = client.fetch_results(match_day)
     return parse_results(html, match_day)
 
 
-def fetch_match_by_team(match_day: int, team_name: str) -> MatchResult | None:
+def fetch_match_by_team(match_day: int, team_name: str, team_id: str = "1") -> MatchResult | None:
     """Fetcha e parsa i risultati, restituendo solo la partita di una squadra specifica
     
     Args:
         match_day: Numero della giornata
         team_name: Nome della squadra (cerca home_team o away_team)
+        team_id: ID del team (default: "1")
     
     Returns:
         MatchResult della partita della squadra, o None se non trovata
     """
-    results = fetch_results(match_day)
+    results = fetch_results(match_day, team_id)
     
     for match in results:
         if match.home_team.lower() == team_name.lower() or match.away_team.lower() == team_name.lower():

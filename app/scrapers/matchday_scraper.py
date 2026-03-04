@@ -2,33 +2,36 @@ from app.models.matchday import MatchDay
 from app.scrapers.result_scraper import fetch_results
 
 
-def fetch_next_matches(match_day: int) -> MatchDay:
+def fetch_next_matches(match_day: int, team_id: str = "1") -> MatchDay:
     """Fetcha le prossime partite per una giornata specifica
     
     Args:
         match_day: Numero della giornata
+        team_id: ID del team (default: "1")
     
     Returns:
         MatchDay con i dati delle partite
     """
-    results = fetch_results(match_day)
+    results = fetch_results(match_day, team_id)
     
     return MatchDay(
         match_day=match_day,
         matches=results
     )
 
-def fetch_next_match_by_team(match_day: int, team_name: str) -> MatchDay:
+
+def fetch_next_match_by_team(match_day: int, team_name: str, team_id: str = "1") -> MatchDay:
     """Fetcha e parsa la prossima giornata, restituendo solo la partita di una squadra specifica
     
     Args:
         match_day: Numero della giornata
         team_name: Nome della squadra (cerca home_team o away_team)
+        team_id: ID del team (default: "1")
     
     Returns:
         MatchDay della partita della squadra, o None se non trovata
     """
-    matches = fetch_next_matches(match_day)
+    matches = fetch_next_matches(match_day, team_id)
     
     for match in matches.matches:
         if match.home_team.lower() == team_name.lower() or match.away_team.lower() == team_name.lower():

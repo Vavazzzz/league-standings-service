@@ -1,13 +1,25 @@
 import requests
+from app.core.config import settings
 
 
 class TuttoCampoClient:
     """Client per TuttoCampo che mantiene la sessione e i cookies"""
     
-    BASE_URL = "https://www.tuttocampo.it"
-    CATEGORY_ID = "LO.K.B.S2"
-    
-    def __init__(self):
+    def __init__(self, team_id: str = "1"):
+        """
+        Initialize the TuttoCampo client for a specific team.
+        
+        Args:
+            team_id: Team identifier matching TEAM<id> prefix in .env (default: "1")
+        """
+        # Load configuration from settings
+        team_config = settings.get_team_config(team_id)
+        
+        self.base_url = team_config["base_url"]
+        self.category_id = team_config["category_id"]
+        self.main_url_path = team_config["main_url_path"]
+        self.team_id = team_id
+        
         self.session = requests.Session()
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -23,7 +35,7 @@ class TuttoCampoClient:
         if self._initialized:
             return
             
-        main_url = f"{self.BASE_URL}/Lombardia/CalcioA5SerieC2/GironeBSerieC2"
+        main_url = f"{self.base_url}/{self.main_url_path}"
         
         try:
             response = self.session.get(main_url, headers=self.headers, timeout=10)
@@ -46,13 +58,13 @@ class TuttoCampoClient:
         params = {
             "tckk": self.tckk,
             "v": "1",
-            "category_id": self.CATEGORY_ID,
+            "category_id": self.category_id,
             "match_day_id": match_day or "",
             "total": "true",
             "is_ranking_tab": "false"
         }
         
-        url = f"{self.BASE_URL}/Web/Views/Rankings/RankingView.php"
+        url = f"{self.base_url}/Web/Views/Rankings/RankingView.php"
         response = self.session.get(url, params=params, headers=self.headers, timeout=10)
         response.raise_for_status()
         return response.text
@@ -64,17 +76,16 @@ class TuttoCampoClient:
         params = {
             "tckk": self.tckk,
             "v": "1",
-            "category_id": self.CATEGORY_ID,
+            "category_id": self.category_id,
             "match_day_id": match_day,
             "is_ranking_tab": "false"
         }
         
-        url = f"{self.BASE_URL}/Web/Views/Results/ResultsView.php"
+        url = f"{self.base_url}/Web/Views/Results/ResultsView.php"
         response = self.session.get(url, params=params, headers=self.headers, timeout=10)
         response.raise_for_status()
         return response.text
 
     def fetch_next_matches(self, match_day: int) -> str:
         """Fetcha le prossime partite per una giornata specifica"""
-        # È lo stesso endpoint dei risultati, ma potrebbe essere filtrato diversamente
         return self.fetch_results(match_day)

@@ -46,15 +46,16 @@ def parse_ranking(html: str) -> list[StandingRow]:
     return standings
 
 
-def fetch_standings(match_day: int | None = None) -> list[StandingRow]:
+def fetch_standings(match_day: int | None = None, team_id: str = "1") -> list[StandingRow]:
     """Fetcha e parsa la classifica da TuttoCampo
     
     Args:
         match_day: Numero della giornata (None per classifica totale)
+        team_id: ID del team (default: "1")
     
     Returns:
         Lista di StandingRow
     """
-    client = TuttoCampoClient()
+    client = TuttoCampoClient(team_id=team_id)
     html = client.fetch_standings(match_day)
     return parse_ranking(html)
