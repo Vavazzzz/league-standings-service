@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Query
+from fastapi.responses import FileResponse
 from app.models.standings import StandingRow
 from app.models.matchresult import MatchResult
 from app.models.matchday import MatchDay
 from app.scrapers.standings_scraper import fetch_standings
 from app.scrapers.result_scraper import fetch_results, fetch_match_by_team
 from app.scrapers.matchday_scraper import fetch_next_matches, fetch_next_match_by_team
+from app.services.standings_render_service import StandingsRenderService
 
 router = APIRouter(prefix="/data", tags=["data"])
 
@@ -79,3 +81,27 @@ def get_matchday_by_team(match_day: int = Query(...), team_name: str = Query(...
         MatchDay con tutti i dati della giornata
     """
     return fetch_next_match_by_team(match_day, team_name, team_id)
+
+
+@router.get("/standings/render")
+def render_standings(team_id: str = Query("1"), match_day: int | None = Query(None)):
+    """Renders standings as PNG and returns file for download
+    
+    Args:
+        team_id: ID of the team (default: "1")
+        match_day: Optional matchday number
+    
+    Returns:
+        PNG file download
+    """
+    service = StandingsRenderService()
+    output_path = service.render_standings_png(team_id, match_day)
+    
+    # Determine filename for download
+    filename = service._generate_filename(team_id, match_day)
+    
+    return FileResponse(
+        path=output_path,
+        media_type="image/png",
+        filename=filename
+    )

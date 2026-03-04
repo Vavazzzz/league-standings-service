@@ -1,10 +1,15 @@
 from fastapi import FastAPI
-from app.api.routes import health, data
+from fastapi.staticfiles import StaticFiles
+from app.api.routes import health, data, pages
 
 app = FastAPI(title="League Standings Service")
 
 app.include_router(health.router)
 app.include_router(data.router)
+app.include_router(pages.router)
+
+# Mount static files (if needed for CSS, JS)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 
 if __name__ == "__main__":
