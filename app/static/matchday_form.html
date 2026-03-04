@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Standings Renderer</title>
+    <title>Matchday Viewer</title>
     <style>
         * {
             margin: 0;
@@ -19,6 +19,26 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+        }
+        
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+        
+        .back-link a {
+            color: white;
+            font-weight: 500;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .back-link a:hover {
+            text-decoration: underline;
         }
         
         .container {
@@ -64,7 +84,7 @@
             font-family: inherit;
         }
         
-        select:focus, input[type="number"]:focus {
+        select:focus, input:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -106,6 +126,62 @@
             cursor: not-allowed;
         }
         
+        .matchday-display {
+            margin-top: 30px;
+            max-height: 500px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            border-radius: 6px;
+            padding: 20px;
+            display: none;
+        }
+        
+        .matchday-display.show {
+            display: block;
+        }
+        
+        .matchday-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .match {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .match-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .teams {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .score {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .match-info {
+            font-size: 13px;
+            color: #666;
+            display: flex;
+            gap: 15px;
+        }
+        
         .loading {
             display: none;
             text-align: center;
@@ -137,13 +213,10 @@
             font-size: 14px;
         }
         
-        .success {
-            background: #efe;
-            color: #3c3;
-            padding: 12px 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            display: none;
+        .no-results {
+            text-align: center;
+            color: #666;
+            padding: 20px;
             font-size: 14px;
         }
     </style>
@@ -154,13 +227,12 @@
     </div>
     
     <div class="container">
-        <h1>⚽ Standings Renderer</h1>
-        <p class="subtitle">Select parameters and download your standings image</p>
+        <h1>🗓️ Matchday Viewer</h1>
+        <p class="subtitle">View all matches for a specific matchday</p>
         
         <div class="error" id="errorMessage"></div>
-        <div class="success" id="successMessage"></div>
         
-        <form id="standingsForm">
+        <form id="matchdayForm">
             <div class="form-group">
                 <label for="teamId">Team</label>
                 <select id="teamId" name="teamId" required>
@@ -168,35 +240,43 @@
                     <option value="1">Team 1</option>
                     <option value="2">Team 2</option>
                 </select>
-                <div class="form-info">Select the team league to render</div>
+                <div class="form-info">Select the team league</div>
             </div>
             
             <div class="form-group">
-                <label for="matchDay">Match Day (Optional)</label>
+                <label for="matchDay">Match Day</label>
                 <input 
                     type="number" 
                     id="matchDay" 
                     name="matchDay"
                     min="1"
-                    placeholder="Leave empty for total standings"
+                    placeholder="e.g., 5"
+                    required
                 >
-                <div class="form-info">Leave empty for total standings, or specify a matchday number</div>
+                <div class="form-info">Specify matchday number</div>
             </div>
             
-            <button type="submit">Download Standings Image</button>
+            <button type="submit">Get Matchday</button>
         </form>
         
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p style="margin-top: 10px; color: #666; font-size: 14px;">Rendering standings...</p>
+            <p style="margin-top: 10px; color: #666; font-size: 14px;">Loading matchday data...</p>
+        </div>
+        
+        <div class="matchday-display" id="matchdayDisplay">
+            <div class="matchday-title" id="matchdayTitle"></div>
+            <div id="matchesList"></div>
         </div>
     </div>
     
     <script>
-        const form = document.getElementById('standingsForm');
+        const form = document.getElementById('matchdayForm');
         const loading = document.getElementById('loading');
         const errorMessage = document.getElementById('errorMessage');
-        const successMessage = document.getElementById('successMessage');
+        const matchdayDisplay = document.getElementById('matchdayDisplay');
+        const matchdayTitle = document.getElementById('matchdayTitle');
+        const matchesList = document.getElementById('matchesList');
         
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -204,45 +284,27 @@
             const teamId = document.getElementById('teamId').value;
             const matchDay = document.getElementById('matchDay').value;
             
-            if (!teamId) {
-                showError('Please select a team');
+            if (!teamId || !matchDay) {
+                showError('Please fill all fields');
                 return;
             }
             
-            // Show loading state
             loading.style.display = 'block';
             errorMessage.style.display = 'none';
-            successMessage.style.display = 'none';
+            matchdayDisplay.classList.remove('show');
             form.style.opacity = '0.5';
             form.style.pointerEvents = 'none';
             
             try {
-                // Build URL with query parameters
-                let url = `/data/standings/render?team_id=${teamId}`;
-                if (matchDay) {
-                    url += `&match_day=${matchDay}`;
-                }
-                
-                // Fetch the file
-                const response = await fetch(url);
+                const response = await fetch(`/data/matchday?match_day=${matchDay}&team_id=${teamId}`);
                 
                 if (!response.ok) {
-                    const error = await response.text();
-                    throw new Error(error || `Server error: ${response.status}`);
+                    throw new Error(`Server error: ${response.status}`);
                 }
                 
-                // Create download link
-                const blob = await response.blob();
-                const downloadUrl = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = downloadUrl;
-                link.download = `standings_team${teamId}_${matchDay ? 'day' + matchDay : 'total'}.png`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(downloadUrl);
-                
-                showSuccess('Standings rendered successfully!');
+                const data = await response.json();
+                displayMatchday(data);
+                matchdayDisplay.classList.add('show');
             } catch (error) {
                 showError(`Error: ${error.message}`);
             } finally {
@@ -252,17 +314,35 @@
             }
         });
         
+        function displayMatchday(data) {
+            matchdayTitle.textContent = `Matchday ${data.match_day}`;
+            
+            if (!data.matches || data.matches.length === 0) {
+                matchesList.innerHTML = '<div class="no-results">No matches found for this matchday</div>';
+                return;
+            }
+            
+            matchesList.innerHTML = data.matches.map(match => `
+                <div class="match">
+                    <div class="match-header">
+                        <div class="teams">
+                            ${match.home_team} vs ${match.away_team}
+                        </div>
+                        <div class="score">
+                            ${match.home_score ?? '-'} : ${match.away_score ?? '-'}
+                        </div>
+                    </div>
+                    <div class="match-info">
+                        <span>${match.date || 'Date TBD'}</span>
+                        <span>${match.time || 'Time TBD'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
         function showError(message) {
             errorMessage.textContent = message;
             errorMessage.style.display = 'block';
-        }
-        
-        function showSuccess(message) {
-            successMessage.textContent = message;
-            successMessage.style.display = 'block';
-            setTimeout(() => {
-                successMessage.style.display = 'none';
-            }, 3000);
         }
     </script>
 </body>
