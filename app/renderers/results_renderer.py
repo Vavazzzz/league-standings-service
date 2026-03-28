@@ -3,15 +3,15 @@ import tempfile
 import cairosvg
 from lxml import etree as ET
 
-from app.renderers.svg_utils import load_svg, set_logo
-from app.renderers.text_utils import set_text, extract_surnames, set_multiline_text
+from app.renderers.utils.svg import load_svg, set_logo
+from app.renderers.utils.text import set_text, extract_surnames, set_multiline_text
 
 
 class ResultRenderer:
-
-    def __init__(self, template_path: Path, logos_dir: Path):
+    def __init__(self, template_path: Path, logos_dir: Path, target_team: str = "zelo"):
         self.template_path = template_path
         self.logos_dir = logos_dir
+        self.target_team = target_team.lower()
 
     def render_png(self, match_data_1: dict, match_data_2: dict, output_path: Path):
 
@@ -30,16 +30,14 @@ class ResultRenderer:
         set_logo(root, "away_logo_2", self.logos_dir / f"{match_data_2['away_team_id']}.png")
 
         # ===== Scorers =====
-        # Extract scorers with just surnames
-        home_scorers_1 = extract_surnames(match_data_1["home_scorers"])
-        away_scorers_1 = extract_surnames(match_data_1["away_scorers"])
-        home_scorers_2 = extract_surnames(match_data_2["home_scorers"])
-        away_scorers_2 = extract_surnames(match_data_2["away_scorers"])
-        
-        # Use the team with more scorers
-        scorers_1 = home_scorers_1 if len(home_scorers_1) >= len(away_scorers_1) else away_scorers_1
-        scorers_2 = home_scorers_2 if len(home_scorers_2) >= len(away_scorers_2) else away_scorers_2
-        
+        def get_target_scorers(data):
+            if self.target_team in data["home_team"].lower():
+                return data.get("home_scorers", [])
+            return data.get("away_scorers", [])
+
+        scorers_1 = extract_surnames(get_target_scorers(match_data_1))
+        scorers_2 = extract_surnames(get_target_scorers(match_data_2))
+
         set_multiline_text(root, "scorers_1", scorers_1)
         set_multiline_text(root, "scorers_2", scorers_2)
 
