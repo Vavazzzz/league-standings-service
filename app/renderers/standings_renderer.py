@@ -29,8 +29,8 @@ class StandingsRenderer:
 
     def render_png(self, standings: list, output_path: Path):
 
-        if len(standings) != 12:
-            raise ValueError("Il renderer classifica richiede esattamente 12 squadre")
+        #if len(standings) != 12:
+            #raise ValueError("Il renderer classifica richiede esattamente 12 squadre")
 
         tree = load_svg(str(self.template_path))
 
