@@ -5,10 +5,10 @@ import cairosvg
 
 from app.renderers.svg_utils import (
     load_svg,
-    set_text,
     set_logo
 )
 
+from app.renderers.text_utils import set_text
 
 # Team name exceptions for display
 TEAM_NAME_MAPPINGS = {

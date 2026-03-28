@@ -1,6 +1,10 @@
 import requests
 from app.core.config import settings
 
+CATEGORY_ID_1 = "LO.K.B.S2"
+CATEGORY_ID_2 = "LO.KD.A.SD"
+URL_1 = "/Lombardia/CalcioA5SerieC2/GironeBSerieC2/"
+URL_2 = "/Lombardia/CalcioA5Dilettanti/GironeASerieD/"
 
 class TuttoCampoClient:
     """Client per TuttoCampo che mantiene la sessione e i cookies"""
